@@ -1,0 +1,84 @@
+/* Fun mode. Added by fun/engine.js while fun mode is on, and removed when it goes off. */
+
+body.fun { --fun-l: 284px; --fun-r: var(--notes-w); }
+@media (max-width: 1240px) { body.fun { --fun-l: 260px; --fun-r: 0px; } }
+@media (max-width: 760px) { body.fun { --fun-l: 0px; } }
+
+/* ── layers ──────────────────────────────────────────────────────────────────
+   z 0   .fun-bg-layer    backgrounds. Gets pointer events wherever the UI leaves empty space.
+   z 1   sidebar, stage, notes (frosted)
+   z 70  .fun-game-layer  games, on top of the UI. pointer-events: none, opt in per element.
+   z 75  .fun-hud, z 210 .fun-toasts */
+
+.fun-layer { position: fixed; inset: 0; }
+.fun-bg-layer { z-index: 0; overflow: hidden; background: var(--bg); touch-action: pinch-zoom; }
+.fun-game-layer { z-index: 70; pointer-events: none; }
+.fun-scene { position: absolute; inset: 0; overflow: hidden; }
+.fun-game { pointer-events: none; }
+
+body.fun .side, body.fun .stage { position: relative; z-index: 1; }
+@media (min-width: 1241px) { body.fun .notes { position: relative; z-index: 1; } }
+
+/* The stage lets clicks fall through to the background, except on the card and its buttons, and on
+   its own scrollbar while that's hovered (engine.js adds .fun-scrollbar). Touch drags and the wheel
+   over the background are passed on to the stage by the engine. */
+body.fun .stage { pointer-events: none; }
+body.fun .stack, body.fun .notes-toggle, body.fun.fun-scrollbar .stage { pointer-events: auto; }
+
+/* Frosted side panels so the scene shows through. The card stays solid. */
+body.fun .side, body.fun .notes {
+  --faint: var(--muted);
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(1.6);
+  backdrop-filter: blur(18px) saturate(1.6);
+}
+body.fun .side { border-right-color: color-mix(in srgb, var(--ink) 10%, transparent); }
+body.fun .notes { border-left-color: color-mix(in srgb, var(--ink) 10%, transparent); }
+@media (max-width: 1240px) { body.fun .notes { background: color-mix(in srgb, var(--bg) 84%, transparent); } }
+body.fun .note { background: color-mix(in srgb, var(--ink) 5%, transparent); }
+body.fun .found { background: color-mix(in srgb, var(--card) 40%, transparent); }
+body.fun .ghost.g1 { box-shadow: 0 0 0 1px var(--line), 0 6px 20px -8px rgba(0, 0, 0, 0.25); }
+body.fun .card { box-shadow: var(--shadow), 0 24px 60px -20px rgba(0, 0, 0, 0.35); }
+
+/* A scene's cursor (k.cursor) wins over the UI's own cursors while it's set. */
+html.fun-cursor, html.fun-cursor * { cursor: var(--fun-cursor) !important; }
+
+/* ── HUD ─────────────────────────────────────────────────────────────────── */
+/* Top right of the stage, above the card stack. Under 1241px the Notes button is there, so the HUD
+   sits to its left. Scenes can keep clear of it with k.space().hud. */
+
+.fun-hud {
+  position: fixed; right: calc(var(--fun-r) + 20px); top: 16px; z-index: 75;
+  display: flex; gap: 6px; pointer-events: none;
+  opacity: 0; transform: translateY(-6px); transition: opacity 0.3s, transform 0.4s var(--ease-out);
+}
+.fun-hud.on { opacity: 1; transform: none; }
+@media (max-width: 1240px) { .fun-hud { right: 100px; } }
+.fun-hud span {
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px 5px 8px; border-radius: 99px;
+  background: rgba(12, 12, 12, 0.72); color: #fff; font: 650 12.5px/1 var(--sans); font-variant-numeric: tabular-nums;
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 6px 18px -6px rgba(0, 0, 0, 0.4);
+}
+.fun-hud i { font-style: normal; font-size: 13px; }
+
+/* ── toasts (k.toast) ────────────────────────────────────────────────────── */
+
+.fun-toasts {
+  position: fixed; top: 16px; left: var(--fun-l); right: var(--fun-r); z-index: 210;
+  display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none;
+}
+.fun-toast {
+  display: flex; align-items: center; gap: 8px; max-width: min(460px, 90vw);
+  background: var(--ink); color: var(--card); font-size: 12.5px; font-weight: 500; padding: 8px 14px; border-radius: 10px;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.45);
+  animation: fun-toast-in 0.42s var(--ease-pop);
+  transition: opacity 0.25s, transform 0.3s var(--ease-out);
+}
+.fun-toast i { font-style: normal; font-size: 15px; }
+.fun-toast.out { opacity: 0; transform: translateY(-8px); }
+@keyframes fun-toast-in { from { opacity: 0; transform: translateY(-10px) scale(0.96); } }
+
+/* ── done card ───────────────────────────────────────────────────────────── */
+
+.state p.fun-done { margin-top: 10px; color: var(--ink-2); }

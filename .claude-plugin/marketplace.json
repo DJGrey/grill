@@ -1,0 +1,16 @@
+{
+  "name": "grill",
+  "owner": {
+    "name": "grill contributors"
+  },
+  "metadata": {
+    "description": "The grill skill: an agent interviews you about a plan in a browser UI."
+  },
+  "plugins": [
+    {
+      "name": "grill",
+      "source": "./",
+      "description": "Get grilled on a plan, one question at a time, in a browser UI with charts, a starred recommendation and an optional fun mode."
+    }
+  ]
+}

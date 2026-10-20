@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grill</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230b0b0b'/><path d='M9 12h14M9 16h14M9 20h14' stroke='white' stroke-width='2.4' stroke-linecap='round'/></svg>">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <aside class="side" aria-label="Decisions">
+    <header class="side-head" id="head"></header>
+    <div class="side-scroll">
+      <ol class="list" id="decisions"></ol>
+      <div id="extras"></div>
+    </div>
+    <footer class="side-foot">
+      <span><kbd>esc</kbd> current</span>
+      <span><kbd>⌘J</kbd> notes</span>
+      <span class="fun-switch">
+        <button class="fun-sound" id="fun-sound" type="button" aria-pressed="false" aria-label="Sound effects" title="Sound effects"><svg viewBox="0 0 16 16" aria-hidden="true"><path class="spk" d="M2.5 6h2.2L8 3.3v9.4L4.7 10H2.5z"/><path class="wave" d="M10.6 5.7a3.3 3.3 0 0 1 0 4.6M12.4 4a5.8 5.8 0 0 1 0 8"/><path class="mute" d="M10.5 6l3.5 4M14 6l-3.5 4"/></svg></button>
+        <button class="fun-toggle" id="fun-toggle" type="button" role="switch" aria-checked="false" title="Fun mode: backgrounds and little games"><kbd id="fun-key">⌘⇧F</kbd> <b>fun</b></button>
+      </span>
+    </footer>
+  </aside>
+
+  <main class="stage" id="stage">
+    <button class="notes-toggle" id="notes-toggle" type="button">Notes <span id="notes-count"></span></button>
+    <div class="stack" id="stack">
+      <div class="ghost g2"></div>
+      <div class="ghost g1"></div>
+    </div>
+  </main>
+
+  <aside class="notes" aria-label="Notes for the agent">
+    <header class="notes-head">
+      <h2>Notes</h2>
+      <p>Add context any time. It goes straight back to the agent.</p>
+    </header>
+    <form class="compose" id="compose">
+      <textarea id="note-box" rows="3" placeholder="Add context, constraints, a change of mind…"></textarea>
+      <div class="compose-foot">
+        <span class="hint"><kbd>⌘</kbd><kbd>↵</kbd> send</span>
+        <button type="submit" class="btn-small">Send</button>
+      </div>
+    </form>
+    <div class="notes-scroll">
+      <section class="found" id="found" hidden></section>
+      <ul class="note-list" id="notes"></ul>
+    </div>
+  </aside>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
