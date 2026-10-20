@@ -10,7 +10,7 @@
 #
 # What it does:
 #   - clones the repo to ~/.grill (or updates it), unless you run it from a clone
-#   - links skills/grill into ~/.claude/skills, ~/.codex/skills and ~/.agents/skills
+#   - links skills/grill-ui into ~/.claude/skills, ~/.codex/skills and ~/.agents/skills
 #   - allows the grill UI's script in ~/.claude/settings.json, so it opens without a prompt
 set -euo pipefail
 
@@ -34,7 +34,7 @@ warn() { printf '! %s\n' "$*" >&2; }
 # ── find or fetch the repo ────────────────────────────────────────────────
 
 self="${BASH_SOURCE[0]:-}"
-if [ -n "$self" ] && [ -f "$self" ] && [ -f "$(dirname "$self")/skills/grill/SKILL.md" ]; then
+if [ -n "$self" ] && [ -f "$self" ] && [ -f "$(dirname "$self")/skills/grill-ui/SKILL.md" ]; then
   repo="$(cd "$(dirname "$self")" && pwd)"
 elif $uninstall; then
   repo="$CLONE_DIR"
@@ -50,7 +50,7 @@ else
   repo="$CLONE_DIR"
 fi
 
-skill="$repo/skills/grill"
+skill="$repo/skills/grill-ui"
 script="$skill/scripts/grill.mjs"
 
 targets=()
@@ -60,7 +60,7 @@ done
 [ ${#targets[@]} -eq 0 ] && targets=("$HOME/.claude/skills")
 
 # Both paths an agent might use to call the script: through the link, and the real one.
-rules=("Bash(node $script:*)" "Bash(node $HOME/.claude/skills/grill/scripts/grill.mjs:*)")
+rules=("Bash(node $script:*)" "Bash(node $HOME/.claude/skills/grill-ui/scripts/grill.mjs:*)")
 
 edit_permissions() { # add|remove
   local settings="$HOME/.claude/settings.json"
@@ -91,7 +91,7 @@ JS
 
 if $uninstall; then
   for target in "${targets[@]}"; do
-    link="$target/grill"
+    link="$target/grill-ui"
     if [ -L "$link" ] && [ "$(readlink "$link")" = "$skill" ]; then rm "$link"; say "  removed $link"; fi
   done
   edit_permissions remove
@@ -109,10 +109,15 @@ else
 fi
 
 chmod +x "$script"
+# Before it was renamed, the skill was linked as "grill".
+for target in "${targets[@]}"; do
+  old="$target/grill"
+  if [ -L "$old" ] && [ "$(readlink "$old")" = "$repo/skills/grill" ]; then rm "$old"; fi
+done
 backup="$HOME/.grill-backup/$(date +%Y%m%d-%H%M%S)"
 for target in "${targets[@]}"; do
   mkdir -p "$target"
-  link="$target/grill"
+  link="$target/grill-ui"
   if [ -L "$link" ] && [ "$(readlink "$link")" = "$skill" ]; then say "  ok $link"; continue; fi
   if [ -L "$link" ]; then
     rm "$link"
@@ -128,4 +133,4 @@ done
 edit_permissions add
 
 say ""
-say "Done. Restart your agent, then ask it to grill you on something (or type /grill in Claude Code)."
+say "Done. Restart your agent, then ask it to grill you on something (or type /grill-ui in Claude Code)."

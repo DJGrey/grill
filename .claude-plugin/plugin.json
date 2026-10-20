@@ -1,6 +1,6 @@
 {
   "name": "grill",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "Get grilled on a plan, one question at a time, in a browser UI with charts, a starred recommendation and an optional fun mode.",
   "license": "MIT",
   "repository": "https://github.com/DJGrey/grill"

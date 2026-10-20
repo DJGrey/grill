@@ -1,9 +1,9 @@
 ---
-name: grill
+name: grill-ui
 description: Interview the user relentlessly about a plan, design or feature until every branch of the decision tree is settled. Questions appear in a browser UI (one card at a time, with context, charts and a starred recommendation), not in chat. It ends with a decision log. Use when the user wants to stress-test a plan, get grilled on a design, or says "grill me".
 ---
 
-# Grill
+# Grill UI
 
 Interview me until we reach a shared understanding. Map the plan as a **design tree**. Every decision branches into the decisions that hang off it. Resolve them one by one in the grill UI, not in chat.
 

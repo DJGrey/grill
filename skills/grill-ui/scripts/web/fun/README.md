@@ -129,8 +129,8 @@ Everything here is cleaned up for you at unmount: elements, listeners, timers, l
 Run a server on a copy of the example grill file, on its own port:
 
 ```sh
-mkdir -p /tmp/fun-<id> && cp skills/grill/references/example.md /tmp/fun-<id>/grill.md
-node skills/grill/scripts/grill.mjs serve /tmp/fun-<id>/grill.md --port <port> --no-open &
+mkdir -p /tmp/fun-<id> && cp skills/grill-ui/references/example.md /tmp/fun-<id>/grill.md
+node skills/grill-ui/scripts/grill.mjs serve /tmp/fun-<id>/grill.md --port <port> --no-open &
 ```
 
 For the waiting card, serve a file with no questions yet. For the done card, set `status: done` and answer everything. Answers are saved next to the file in `.grill.state/`. Delete that folder to start over.

@@ -17,7 +17,7 @@ That downloads the skill to `~/.grill`, links it into your agents' skill folders
 <details>
 <summary>Other ways to install</summary>
 
-**As a Claude Code plugin.** Updates come through `/plugin`. Claude Code asks once before the UI first opens, so pick "don't ask again".
+**As a Claude Code plugin.** Updates come through `/plugin`, and the command is `/grill:grill-ui`. Claude Code asks once before the UI first opens, so pick "don't ask again".
 
 ```
 /plugin marketplace add DJGrey/grill
@@ -40,7 +40,7 @@ Ask your agent to grill you:
 
 > grill me on moving our billing code into its own service
 
-In Claude Code you can also type `/grill`. The agent opens the UI, researches what it needs, then queues up questions. Answer them in the browser. Your answers go straight back to the agent, which logs each decision and writes the next questions. When every branch is settled, you get the decision log in chat.
+In Claude Code you can also type `/grill-ui`. The agent opens the UI, researches what it needs, then queues up questions. Answer them in the browser. Your answers go straight back to the agent, which logs each decision and writes the next questions. When every branch is settled, you get the decision log in chat.
 
 | Key | Does |
 |---|---|
@@ -63,7 +63,7 @@ It's off by default, respects reduced motion, and never touches your answer.
 
 The agent writes the questions to a markdown file, `.context/<slug>/grill.md` in your repo, and keeps `.context/` out of git with your local ignore list. A small Node server renders that file live and records your answers in a folder next to it. The agent runs `grill.mjs wait`, which returns the moment you answer.
 
-The file format is in [skills/grill/references/format.md](skills/grill/references/format.md), with a full example in [example.md](skills/grill/references/example.md).
+The file format is in [skills/grill-ui/references/format.md](skills/grill-ui/references/format.md), with a full example in [example.md](skills/grill-ui/references/example.md).
 
 Running on a [Conductor](https://conductor.build) cloud workspace with no screen? The UI shows up at the workspace preview URL instead.
 
@@ -73,7 +73,7 @@ Put house rules in `~/.config/grill/instructions.md` and the agent follows them 
 
 ## Contributing
 
-Ideas and new fun-mode scenes are welcome. [skills/grill/scripts/web/fun/README.md](skills/grill/scripts/web/fun/README.md) explains how to write a background or a game and how to test it.
+Ideas and new fun-mode scenes are welcome. [skills/grill-ui/scripts/web/fun/README.md](skills/grill-ui/scripts/web/fun/README.md) explains how to write a background or a game and how to test it.
 
 ## License
 
