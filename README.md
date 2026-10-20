@@ -67,6 +67,10 @@ The file format is in [skills/grill/references/format.md](skills/grill/reference
 
 Running on a [Conductor](https://conductor.build) cloud workspace with no screen? The UI shows up at the workspace preview URL instead.
 
+## Make it yours
+
+Put house rules in `~/.config/grill/instructions.md` and the agent follows them in every grill. Use it for how you like questions written, or what should happen when a grill finishes, like writing a spec in your team's format. It overrides the skill where they disagree, and updates never touch it.
+
 ## Contributing
 
 Ideas and new fun-mode scenes are welcome. [skills/grill/scripts/web/fun/README.md](skills/grill/scripts/web/fun/README.md) explains how to write a background or a game and how to test it.

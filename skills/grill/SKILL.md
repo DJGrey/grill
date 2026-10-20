@@ -13,6 +13,10 @@ Write everything I read (questions, options, "What I found", the decision log an
 
 `GRILL` below means `node <this skill's folder>/scripts/grill.mjs`. Use the absolute path so the command matches the permission rule `install.sh` sets up. It needs Node 18 or newer and nothing else.
 
+## Your own instructions
+
+If `~/.config/grill/instructions.md` exists, read it before anything else and follow it for the whole session. It holds house rules, like how to write or what to do once the grill is done. Where it disagrees with this file, it wins.
+
 ## Setup (once, at the start)
 
 1. **Pick the slug.** Propose a short kebab-case slug from the topic (`bulk-invoice-approval`). Use it right away. Asking me to confirm it is the first question.
