@@ -1,4 +1,4 @@
-# grill
+# grill-ui
 
 Your coding agent interviews you about a plan until every decision is settled. The questions show up in your browser, one card at a time, each with the context, a chart or diagram when it helps, and a ★ on the answer the agent recommends.
 
@@ -12,16 +12,16 @@ It works with Claude Code, Codex and any agent that reads `SKILL.md` skill folde
 curl -fsSL https://raw.githubusercontent.com/DJGrey/grill/main/install.sh | bash
 ```
 
-That downloads the skill to `~/.grill`, links it into your agents' skill folders, and lets Claude Code open the UI without asking each time. Run the same line again to update.
+That downloads the skill to `~/.grill-ui`, links it into your agents' skill folders, and lets Claude Code open the UI without asking each time. Run the same line again to update.
 
 <details>
 <summary>Other ways to install</summary>
 
-**As a Claude Code plugin.** Updates come through `/plugin`, and the command is `/grill:grill-ui`. Claude Code asks once before the UI first opens, so pick "don't ask again".
+**As a Claude Code plugin.** Updates come through `/plugin`, and the command is `/grill-ui:grill-ui`. Claude Code asks once before the UI first opens, so pick "don't ask again".
 
 ```
 /plugin marketplace add DJGrey/grill
-/plugin install grill@grill
+/plugin install grill-ui@grill-ui
 ```
 
 **From a clone.** Handy if you want to change it.
@@ -30,7 +30,7 @@ That downloads the skill to `~/.grill`, links it into your agents' skill folders
 git clone https://github.com/DJGrey/grill.git && cd grill && ./install.sh
 ```
 
-**Uninstall** with `~/.grill/install.sh --uninstall`, then delete `~/.grill`.
+**Uninstall** with `~/.grill-ui/install.sh --uninstall`, then delete `~/.grill-ui`.
 
 </details>
 
@@ -69,7 +69,7 @@ Running on a [Conductor](https://conductor.build) cloud workspace with no screen
 
 ## Make it yours
 
-Put house rules in `~/.config/grill/instructions.md` and the agent follows them in every grill. Use it for how you like questions written, or what should happen when a grill finishes, like writing a spec in your team's format. It overrides the skill where they disagree, and updates never touch it.
+Put house rules in `~/.config/grill-ui/instructions.md` and the agent follows them in every grill. Use it for how you like questions written, or what should happen when a grill finishes, like writing a spec in your team's format. It overrides the skill where they disagree, and updates never touch it.
 
 ## Contributing
 

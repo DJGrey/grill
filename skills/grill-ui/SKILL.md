@@ -15,7 +15,7 @@ Write everything I read (questions, options, "What I found", the decision log an
 
 ## Your own instructions
 
-If `~/.config/grill/instructions.md` exists, read it before anything else and follow it for the whole session. It holds house rules, like how to write or what to do once the grill is done. Where it disagrees with this file, it wins.
+If `~/.config/grill-ui/instructions.md` exists, read it before anything else and follow it for the whole session. It holds house rules, like how to write or what to do once the grill is done. Where it disagrees with this file, it wins.
 
 ## Setup (once, at the start)
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install the grill skill for Claude Code, Codex and any agent that reads ~/.agents/skills.
+# Install the grill-ui skill for Claude Code, Codex and any agent that reads ~/.agents/skills.
 #
 #   curl -fsSL https://raw.githubusercontent.com/DJGrey/grill/main/install.sh | bash
 #
@@ -9,13 +9,13 @@
 #   --no-permissions   don't touch ~/.claude/settings.json
 #
 # What it does:
-#   - clones the repo to ~/.grill (or updates it), unless you run it from a clone
+#   - clones the repo to ~/.grill-ui (or updates it), unless you run it from a clone
 #   - links skills/grill-ui into ~/.claude/skills, ~/.codex/skills and ~/.agents/skills
 #   - allows the grill UI's script in ~/.claude/settings.json, so it opens without a prompt
 set -euo pipefail
 
 REPO_URL="${GRILL_REPO:-https://github.com/DJGrey/grill.git}"
-CLONE_DIR="${GRILL_HOME:-$HOME/.grill}"
+CLONE_DIR="${GRILL_HOME:-$HOME/.grill-ui}"
 
 uninstall=false
 permissions=true
@@ -44,7 +44,7 @@ else
     say "Updating $CLONE_DIR"
     git -C "$CLONE_DIR" pull --ff-only --quiet
   else
-    say "Downloading grill to $CLONE_DIR"
+    say "Downloading grill-ui to $CLONE_DIR"
     git clone --quiet --depth 1 "$REPO_URL" "$CLONE_DIR"
   fi
   repo="$CLONE_DIR"
@@ -109,11 +109,6 @@ else
 fi
 
 chmod +x "$script"
-# Before it was renamed, the skill was linked as "grill".
-for target in "${targets[@]}"; do
-  old="$target/grill"
-  if [ -L "$old" ] && [ "$(readlink "$old")" = "$repo/skills/grill" ]; then rm "$old"; fi
-done
 backup="$HOME/.grill-backup/$(date +%Y%m%d-%H%M%S)"
 for target in "${targets[@]}"; do
   mkdir -p "$target"
