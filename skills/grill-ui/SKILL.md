@@ -7,7 +7,7 @@ description: Interview the user relentlessly about a plan, design or feature unt
 
 Interview me until we reach a shared understanding. Map the plan as a **design tree**. Every decision branches into the decisions that hang off it. Resolve them one by one in the grill UI, not in chat.
 
-The UI is a local web page. I answer one card at a time. The decisions list is on the left, the current question is in the middle, and a Notes panel on the right lets me add context whenever I like. You write the questions into a markdown file. The page renders it live, and my answers come back to you through `wait`.
+The UI is a local web page. I answer one card at a time. The decisions list is on the left, the current question is in the middle, and a Notes panel on the right lets me add context whenever I like. Each card also has an "Ask the agent" box (⌘K), where I can ask you something before I answer. You write the questions into a markdown file. The page renders it live, and my answers come back to you through `wait`.
 
 Write everything I read (questions, options, "What I found", the decision log and chat) in plain, direct language. Short sentences, everyday words, and a one-clause explanation for any term I might not know. No filler. Lead with what changes for the people who use the thing.
 
@@ -36,9 +36,10 @@ If `~/.config/grill-ui/instructions.md` exists, read it before anything else and
    - **Star your recommendation** with ★ and give the reason in its description. Every question gets a ★, because Enter accepts it. If there's only one sensible answer, write that as a single ★ option, and I can type something else.
    - Set `depends:` to the ids it builds on, so the card shows "Builds on…".
 4. **Wait for me.** Run `GRILL wait .context/<slug>/grill.md`. In Claude Code, run it with `run_in_background: true` so you're woken when I answer. Elsewhere, run it in the foreground with a 10-minute timeout. If the UI isn't running, or stops while you wait, `wait` restarts it on the same port, so my open page reconnects by itself. If it prints "timed out", run it again.
-5. **Read what came back.** `wait` returns as soon as I answer a card or send a note. More cards may still be queued.
+5. **Read what came back.** `wait` returns as soon as I answer a card, ask you something or send a note. More cards may still be queued.
    - Picking your ★ with no comment accepts your recommendation. Anything else is my answer, even if it's only partial. "Their words" is a comment I typed alongside a choice. Treat it as part of the answer.
    - **Log every answer** in `## Decisions so far` as one line: `D<n>. <the decision> ("<my words, if I typed any>") {#question-id}`. The sidebar shows these lines in place of my raw answers, so I can see you understood. `wait` lists any answers you haven't logged yet.
+   - An **ask** is a question I asked you from a card, numbered `A<n>`. I'm stuck on that card until you reply, so answer it before anything else, even before logging answers. Look up the facts like you would for a question. Then write the reply under `## Answers` as a `### A<n>` block. It shows on the card under my question, so keep it short and answer what I asked. Never edit the card itself. If the reply changes your ★, say so in it. If it shows the question is wrong, say so, set `status: skipped` on it and write a better one. `wait` lists any asks you haven't answered yet.
    - A **note** counts as an answer too. If it settles something, log it as a D line with no `{#id}`. If it raises a question back at you, answer it under `## What I found`, which shows up in my Notes panel. If it's an idea that needs a later decision, add it to `## Parked` with your best guess.
    - A **revised** answer means I went back and changed a decision. Update that D line, keeping its number, and re-check everything downstream of it.
 6. **Grow the frontier.** For each answer, work out which decisions it unlocks. Find their facts, then append them as new questions. **Never edit a question that's still queued.** If an answer makes a queued question moot, set `status: skipped` on it rather than deleting it.

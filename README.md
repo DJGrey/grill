@@ -40,7 +40,7 @@ Ask your agent to grill you:
 
 > grill me on moving our billing code into its own service
 
-In Claude Code you can also type `/grill-ui`. The agent opens the UI, researches what it needs, then queues up questions. Answer them in the browser. Your answers go straight back to the agent, which logs each decision and writes the next questions. When every branch is settled, you get the decision log in chat.
+In Claude Code you can also type `/grill-ui`. The agent opens the UI, researches what it needs, then queues up questions. Answer them in the browser. Your answers go straight back to the agent, which logs each decision and writes the next questions. Not sure yet? Press `⌘K` on any card to ask the agent something first, like what a term means or what happens today. Its reply shows on the card, under your question. When every branch is settled, you get the decision log in chat.
 
 | Key | Does |
 |---|---|
@@ -48,6 +48,7 @@ In Claude Code you can also type `/grill-ui`. The agent opens the UI, researches
 | `Enter` | Send. With nothing picked, it takes the ★ recommendation. |
 | `↑` `↓` | Move between options |
 | Just type | Write your own answer, or add to a pick |
+| `⌘K` | Ask the agent about this card before you answer |
 | `⌘J` | Notes, for context the agent should know whenever |
 | `⌘⇧F` | Fun mode |
 
@@ -73,7 +74,7 @@ Put house rules in `~/.config/grill-ui/instructions.md` and the agent follows th
 
 ## Contributing
 
-Ideas and new fun-mode scenes are welcome. [skills/grill-ui/scripts/web/fun/README.md](skills/grill-ui/scripts/web/fun/README.md) explains how to write a background or a game and how to test it.
+Ideas and new fun-mode scenes are welcome. Run the tests with `node --test test/*.test.mjs`. [skills/grill-ui/scripts/web/fun/README.md](skills/grill-ui/scripts/web/fun/README.md) explains how to write a background or a game and how to test it.
 
 ## License
 

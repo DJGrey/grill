@@ -373,6 +373,43 @@ body.fun .fun-toggle b {
 .opt-rec svg { width: 14px; height: 14px; fill: var(--star); }
 .q-optnote { margin-top: 10px; font-size: 13px; color: var(--muted); }
 
+/* asking the agent: your questions about the card, and its answers */
+.q-asks { display: none; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+.q-asks.has, .q-asks.open { display: block; }
+.ask-thread { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.q-asks.open .ask-thread:not(:empty) { margin-bottom: 14px; }
+.ask { display: grid; gap: 8px; }
+.ask-q {
+  justify-self: end; max-width: 85%; padding: 7px 12px; border-radius: 12px 12px 4px 12px;
+  background: var(--hover); color: var(--ink); font-size: 13.5px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.ask-a { padding: 2px 0 2px 12px; border-left: 2px solid var(--line-2); border-radius: 2px; }
+.ask-a .md, .note-reply .md { font-size: 13.5px; line-height: 1.6; }
+.ask-who { font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint); margin-bottom: 2px; }
+.ask-wait { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); padding-left: 2px; }
+.ask-wait .dot { flex: none; width: 5px; height: 5px; border-radius: 50%; background: var(--faint); }
+.ask-wait.looking .dot { background: var(--star); animation: breathe 1.2s ease-in-out infinite; }
+.ask-wait.sending .dot { animation: breathe 0.8s ease-in-out infinite; }
+.ask-form { display: none; }
+.q-asks.open .ask-form { display: block; }
+.ask-label { display: block; font-size: 12px; font-weight: 550; color: var(--ink-2); margin-bottom: 6px; }
+.ask-field {
+  display: flex; align-items: flex-end; gap: 8px; padding: 7px 7px 7px 12px;
+  border-radius: 11px; border: 1px solid var(--line-2); background: var(--field);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.ask-field:focus-within { border-color: color-mix(in srgb, var(--ink) 35%, transparent); box-shadow: 0 0 0 4px var(--ring); }
+.ask-field textarea { font-size: 13.5px; line-height: 20px; min-height: 20px; max-height: 160px; padding: 2px 0; }
+.ask-field .btn-small { flex: none; }
+.ask-hint { display: flex; gap: 12px; margin-top: 6px; font-size: 11px; color: var(--faint); }
+.ask-hint span { display: flex; align-items: center; gap: 4px; }
+.ask-toggle {
+  appearance: none; border: 0; background: none; padding: 0 0 0 6px; margin: 0; font: inherit; color: var(--muted); cursor: pointer;
+  display: inline-flex; align-items: center; gap: 5px; transition: color 0.15s;
+}
+.ask-toggle:hover, .ask-toggle[aria-expanded="true"] { color: var(--ink-2); }
+.ask-toggle:focus-visible { outline: 2px solid var(--s1); outline-offset: 2px; border-radius: 4px; }
+
 /* answer box */
 .q-answer {
   margin-top: 16px;
@@ -470,6 +507,9 @@ body.fun .fun-toggle b {
 .note-meta.sending .dot { animation: breathe 0.8s ease-in-out infinite; }
 .note-meta .on { min-width: 0; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .notes-empty { font-size: 12px; color: var(--faint); padding: 4px 6px; }
+.note-kind { font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint); margin-bottom: 2px; }
+.note-reply { margin-top: 10px; padding-left: 10px; border-left: 2px solid var(--line-2); }
+.note-reply .md ul { padding-left: 16px; }
 
 .notes-toggle { display: none; }
 

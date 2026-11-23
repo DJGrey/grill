@@ -35,6 +35,8 @@ const S = {
   front: null, // id on the front card ('__waiting' | '__done' | question id)
   frontSig: '',
   drafts: new Map(), // question id → { text, picks: Set<label> }
+  asking: new Set(), // question ids with the ask box open
+  seenReplies: null, // ask numbers whose answer we've already shown, so only new ones get a toast
   firstPaint: true,
 };
 
@@ -45,7 +47,8 @@ function derive() {
   const events = [...S.events, ...S.optimistic.values()];
   const answers = new Map();
   const notes = [];
-  for (const e of events) (e.type === 'answer' ? answers.set(e.id, e) : notes.push(e));
+  const asks = [];
+  for (const e of events) (e.type === 'answer' ? answers.set(e.id, e) : e.type === 'ask' ? asks.push(e) : notes.push(e));
   const qs = (S.doc?.questions || []).filter((q) => q.status !== 'skipped');
   const queue = qs.filter((q) => !answers.has(q.id));
   const done = S.doc?.status === 'done' && !queue.length;
@@ -55,7 +58,7 @@ function derive() {
   const decisions = S.doc?.decisions || [];
   const decisionFor = new Map(decisions.filter((d) => d.id).map((d) => [d.id, d]));
   const loose = decisions.filter((d) => !d.id || !qs.some((q) => q.id === d.id));
-  return { answers, notes, qs, queue, done, frontId, decisions, decisionFor, loose };
+  return { answers, notes, asks, qs, queue, done, frontId, decisions, decisionFor, loose };
 }
 
 function draft(q, D) {
@@ -178,10 +181,20 @@ function renderFound() {
   if (had !== undefined && src && !S.firstPaint) box.animate([{ background: cssVar('--flash') }, { background: 'transparent' }], { duration: T(1200), easing: 'ease-out' });
 }
 
+const replyTo = (a) => (a.n && S.doc?.replies[a.n]) || '';
+
+// Where an ask stands: [class, words]. Delivered means the agent has it and is working on the answer.
+function askState(a) {
+  if (a.seq === Infinity) return S.offline ? ['queued', 'Sends when reconnected'] : ['sending', 'Sending…'];
+  if (a.seq <= S.delivered) return ['looking', 'The agent is looking into it…'];
+  return S.listening ? ['sending', 'Delivering…'] : ['queued', 'Waiting for the agent'];
+}
+
 function renderNotes(D) {
   renderFound();
   const ul = $('#notes');
-  const notes = [...D.notes].reverse();
+  const order = (e) => (e.seq === Infinity ? Infinity : e.seq);
+  const notes = [...D.notes, ...D.asks].sort((x, y) => order(x) - order(y) || x.at.localeCompare(y.at)).reverse();
   $('#notes-count').textContent = notes.length || '';
   if (!notes.length) { ul.innerHTML = '<li class="notes-empty">Nothing yet. Notes reach the agent with your next answer, or immediately while it’s listening.</li>'; return; }
   ul.querySelector('.notes-empty')?.remove();
@@ -192,11 +205,16 @@ function renderNotes(D) {
     const isNew = !el;
     if (isNew) { el = document.createElement('li'); el.className = 'note'; el.dataset.key = key; }
     existing.delete(key);
-    const st = n.seq === Infinity ? (S.offline ? ['queued', 'Sends when reconnected'] : ['sending', 'Sending…']) : n.seq <= S.delivered ? ['delivered', 'Delivered'] : S.listening ? ['sending', 'Delivering…'] : ['queued', 'Queued for agent'];
-    const q = n.during && S.doc?.questions.find((x) => x.id === n.during);
+    const ask = n.type === 'ask';
+    const reply = ask && replyTo(n);
+    const st = ask ? (reply ? ['delivered', 'Answered'] : askState(n))
+      : n.seq === Infinity ? (S.offline ? ['queued', 'Sends when reconnected'] : ['sending', 'Sending…']) : n.seq <= S.delivered ? ['delivered', 'Delivered'] : S.listening ? ['sending', 'Delivering…'] : ['queued', 'Queued for agent'];
+    const qid = ask ? n.id : n.during;
+    const q = qid && S.doc?.questions.find((x) => x.id === qid);
     const time = new Date(n.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-    const html = `<div class="note-text">${esc(n.text)}</div><div class="note-meta ${st[0]}"><i class="dot"></i><span>${st[1]} · ${time}</span>${q ? `<span class="on">· ${esc(q.title)}</span>` : ''}</div>`;
-    if (el._html !== html) { el.innerHTML = html; el._html = html; }
+    const html = `${ask ? '<div class="note-kind">You asked</div>' : ''}<div class="note-text">${esc(n.text)}</div>${reply ? `<div class="note-reply"><div class="ask-who">Agent</div><div class="md">${markdown(reply)}</div></div>` : ''}<div class="note-meta ${st[0]}"><i class="dot"></i><span>${st[1]} · ${time}</span>${q ? `<span class="on">· ${esc(q.title)}</span>` : ''}</div>`;
+    el.classList.toggle('ask', ask);
+    if (el._html !== html) { el.innerHTML = html; el._html = html; hydrateDiagrams(el); }
     if (ul.children[idx] !== el) ul.insertBefore(el, ul.children[idx] || null);
     if (isNew && !S.firstPaint) el.animate([{ opacity: 0, transform: 'translateY(-8px) scale(.98)' }, { opacity: 1, transform: 'none' }], { duration: T(300), easing: EASE_OUT });
   });
@@ -239,13 +257,24 @@ function buildCard(id, D) {
     const d = draft(q, D);
     el.innerHTML = `<div class="card-inner">
       <div class="q-body">${questionBodyHTML(q, D)}</div>
+      <section class="q-asks" aria-label="Your questions for the agent">
+        <ol class="ask-thread"></ol>
+        <form class="ask-form">
+          <label class="ask-label" for="ask-${esc(q.id)}">Ask the agent</label>
+          <div class="ask-field">
+            <textarea id="ask-${esc(q.id)}" rows="1" spellcheck="true" placeholder="What would help you decide?"></textarea>
+            <button type="submit" class="btn-small">Ask</button>
+          </div>
+          <div class="ask-hint"><span><kbd>↵</kbd> ask</span><span><kbd>⇧↵</kbd> new line</span><span><kbd>esc</kbd> close</span></div>
+        </form>
+      </section>
       <div class="q-answer">
         <textarea rows="1" spellcheck="true"></textarea>
         <button type="button" class="send" aria-label="Submit answer">${ICON.send}</button>
       </div>
       <div class="q-hints"></div>
     </div>`;
-    const ta = $('textarea', el);
+    const ta = $('.q-answer textarea', el);
     ta.value = d.text;
     ta.addEventListener('input', () => {
       d.text = ta.value;
@@ -255,6 +284,8 @@ function buildCard(id, D) {
     });
     ta.addEventListener('keydown', (e) => onAnswerKey(e, q, el));
     requestAnimationFrame(() => autosize(ta));
+    bindAskBox(el, q);
+    renderAsks(el, q, D);
     updateHints(el, q);
   } else if (id === '__done') {
     el.innerHTML = `<div class="card-inner state">
@@ -297,7 +328,7 @@ const recommended = (q) => q.options.filter((o) => o.recommended).map((o) => o.l
 
 function updateHints(card, q) {
   const d = S.drafts.get(q.id);
-  const ta = $('textarea', card);
+  const ta = $('.q-answer textarea', card);
   const rec = recommended(q);
   const picks = q.options.filter((o) => d.picks.has(o.label)).map((o) => o.label);
   const text = d.text.trim();
@@ -312,7 +343,8 @@ function updateHints(card, q) {
   if (n) keys.push(`<kbd>${n > 1 ? `1-${n}` : '1'}</kbd> ${q.multi ? 'toggle' : 'choose'}`);
   keys.push('<kbd>⇧↵</kbd> new line');
   if (S.pinned) keys.push('<kbd>esc</kbd> back');
-  $('.q-hints', card).innerHTML = `<span class="primary">${primary}</span><span>${keys.join(' ')}</span>`;
+  const ask = `<button type="button" class="ask-toggle" aria-expanded="${S.asking.has(q.id)}"><kbd>${isMac ? '⌘' : 'Ctrl'}K</kbd> ask the agent</button>`;
+  $('.q-hints', card).innerHTML = `<span class="primary">${primary}</span><span>${keys.join(' ')} ${ask}</span>`;
   $('.send', card).disabled = !(picks.length || text || rec.length);
 }
 
@@ -331,7 +363,7 @@ function syncOptions(card, q) {
 function pickByNumber(e, q, card) {
   const n = /^(Digit|Numpad)[1-9]$/.test(e.code) ? Number(e.code.slice(-1)) : /^[1-9]$/.test(e.key) ? Number(e.key) : 0;
   if (!n || e.metaKey || e.ctrlKey || e.isComposing) return false;
-  const ta = $('textarea', card);
+  const ta = $('.q-answer textarea', card);
   if (!e.altKey && ta?.value.trim()) return false;
   const o = q.options[n - 1];
   if (!o) return false;
@@ -399,6 +431,106 @@ function shake(card) {
   card.classList.add('shake');
 }
 
+// ── asking the agent ───────────────────────────────────────────────────────
+// A question from you about the card, answered by the agent under `## Answers` in the grill
+// file. The thread sits outside .q-body, so an answer arriving never redraws the question.
+
+function renderAsks(card, q, D) {
+  const box = $('.q-asks', card);
+  const ol = $('.ask-thread', box);
+  const asks = D.asks.filter((a) => a.id === q.id);
+  box.classList.toggle('has', asks.length > 0);
+  box.classList.toggle('open', S.asking.has(q.id));
+  const existing = new Map([...ol.children].map((el) => [el.dataset.key, el]));
+  asks.forEach((a, idx) => {
+    const key = a.cid || `s${a.seq}`;
+    let el = existing.get(key);
+    const isNew = !el;
+    if (isNew) { el = document.createElement('li'); el.className = 'ask'; el.dataset.key = key; }
+    existing.delete(key);
+    const reply = replyTo(a);
+    const st = askState(a);
+    const html = `<div class="ask-q">${esc(a.text)}</div>${reply
+      ? `<div class="ask-a"><div class="ask-who">Agent</div><div class="md">${markdown(reply)}</div></div>`
+      : `<div class="ask-wait ${st[0]}"><i class="dot"></i><span${st[0] === 'looking' ? ' class="shimmer"' : ''}>${st[1]}</span></div>`}`;
+    if (el._html !== html) {
+      const landed = !!reply && el._replied === false;
+      el.innerHTML = html;
+      el._html = html;
+      el._replied = !!reply;
+      hydrateDiagrams(el);
+      if (landed) $('.ask-a', el).animate([{ background: cssVar('--flash') }, { background: 'transparent' }], { duration: T(1400), easing: 'ease-out' });
+    }
+    if (ol.children[idx] !== el) ol.insertBefore(el, ol.children[idx] || null);
+    if (isNew && !S.firstPaint) el.animate([{ opacity: 0, transform: 'translateY(-4px)' }, { opacity: 1, transform: 'none' }], { duration: T(240), easing: EASE_OUT });
+  });
+  for (const el of existing.values()) el.remove();
+}
+
+function bindAskBox(card, q) {
+  const ta = $('.ask-form textarea', card);
+  const key = `grill:ask:${q.id}`;
+  ta.value = sessionStorage.getItem(key) || '';
+  ta.addEventListener('input', () => {
+    if (ta.value) sessionStorage.setItem(key, ta.value); else sessionStorage.removeItem(key);
+    autosize(ta);
+    syncAskButton(card);
+  });
+  ta.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); sendAsk(q, card); }
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeAsk(q, card); }
+  });
+  $('.ask-form', card).addEventListener('submit', (e) => { e.preventDefault(); sendAsk(q, card); });
+  syncAskButton(card);
+}
+
+const syncAskButton = (card) => { $('.ask-form button', card).disabled = !$('.ask-form textarea', card).value.trim(); };
+
+function openAsk(q, card) {
+  S.asking.add(q.id);
+  $('.q-asks', card).classList.add('open');
+  updateHints(card, q);
+  const ta = $('.ask-form textarea', card);
+  autosize(ta);
+  ta.focus({ preventScroll: true });
+  ta.closest('.q-asks').scrollIntoView({ block: 'nearest', behavior: reduced ? 'instant' : 'smooth' });
+}
+
+function closeAsk(q, card) {
+  S.asking.delete(q.id);
+  $('.q-asks', card).classList.remove('open');
+  updateHints(card, q);
+  focusAnswer(card);
+}
+
+function sendAsk(q, card) {
+  const ta = $('.ask-form textarea', card);
+  const text = ta.value.trim();
+  if (!text) return;
+  ta.value = '';
+  sessionStorage.removeItem(`grill:ask:${q.id}`);
+  autosize(ta);
+  syncAskButton(card);
+  enqueue({ type: 'ask', cid: cid(), id: q.id, text, at: new Date().toISOString(), seq: Infinity });
+  render();
+  ta.focus({ preventScroll: true }); // stay put for a follow-up
+}
+
+// Answers usually land on the card you asked from. If you've moved on, say where it went.
+function noticeReplies() {
+  if (!S.doc) return;
+  const answered = S.events.filter((e) => e.type === 'ask' && replyTo(e));
+  if (!S.seenReplies) { S.seenReplies = new Set(answered.map((e) => e.n)); return; }
+  const D = derive();
+  for (const a of answered) {
+    if (S.seenReplies.has(a.n)) continue;
+    S.seenReplies.add(a.n);
+    if (a.id === D.frontId) continue;
+    const q = S.doc.questions.find((x) => x.id === a.id);
+    toast(q && q.status !== 'skipped' ? `The agent answered your question on “${q.title}”` : 'The agent answered your question. It’s in Notes.');
+  }
+}
+
 // ── stage transitions ──────────────────────────────────────────────────────
 
 function renderStage(D, reason) {
@@ -421,6 +553,7 @@ function renderStage(D, reason) {
         current.replaceChildren(...buildCard(id, D).childNodes);
       }
     } else if (q) updateHints(current, q);
+    if (q) renderAsks(current, q, D);
     updateGhosts(D);
     return;
   }
@@ -448,7 +581,7 @@ function renderStage(D, reason) {
 }
 
 function focusAnswer(card = $('#stack .card.front')) {
-  const ta = card && $('textarea', card);
+  const ta = card && $('.q-answer textarea', card);
   if (!ta) return;
   ta.focus({ preventScroll: true });
   ta.setSelectionRange(ta.value.length, ta.value.length);
@@ -585,6 +718,7 @@ $('#stack').addEventListener('click', (e) => {
     if (e.detail === 2 && S.drafts.get(q.id).picks.has(opt.dataset.label)) submit(q, card);
     else if (e.detail === 2) { togglePick(q, opt.dataset.label, card); submit(q, card); }
   } else if (e.target.closest('.send') && q) submit(q, card);
+  else if (e.target.closest('.ask-toggle') && q) (S.asking.has(q.id) ? closeAsk(q, card) : openAsk(q, card));
   else if (e.target.closest('.copy')) copySummary();
 });
 
@@ -609,6 +743,15 @@ document.addEventListener('keydown', (e) => {
     e.preventDefault();
     if (document.activeElement === noteBox) { document.body.classList.remove('notes-open'); focusAnswer(); }
     else { document.body.classList.add('notes-open'); noteBox.focus(); }
+    return;
+  }
+  if (mod && !e.shiftKey && e.key.toLowerCase() === 'k') {
+    const card = $('#stack .card.front');
+    const q = card && S.doc?.questions.find((x) => x.id === card.dataset.id);
+    if (!q) return;
+    e.preventDefault();
+    if (document.activeElement === $('.ask-form textarea', card)) closeAsk(q, card);
+    else openAsk(q, card);
     return;
   }
   if (e.key === 'Escape' && S.pinned && document.activeElement !== noteBox) {
@@ -718,13 +861,15 @@ async function flush() {
     if (!S.optimistic.has(e.cid)) continue;
     const { seq, at, ...body } = e;
     try {
-      await post(e.type === 'note' ? '/api/note' : '/api/answer', body);
+      await post(e.type === 'note' ? '/api/note' : e.type === 'ask' ? '/api/ask' : '/api/answer', body);
     } catch (err) {
       if (err.rejected) {
         S.optimistic.delete(e.cid); // the server won't ever take it, so don't loop
         saveOutbox();
         restoreDraft(e);
-        toast(e.type === 'note' ? 'The grill server turned that note down. It’s back in the box.' : 'The grill server turned that answer down. It’s back on the card.');
+        toast(e.type === 'note' ? 'The grill server turned that note down. It’s back in the box.'
+          : e.type === 'ask' ? 'The grill server turned that question down. It’s back in the box.'
+            : 'The grill server turned that answer down. It’s back on the card.');
         render();
         continue;
       }
@@ -738,6 +883,15 @@ async function flush() {
 }
 
 function restoreDraft(e) {
+  if (e.type === 'ask') {
+    const key = `grill:ask:${e.id}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, e.text);
+    const card = $(`#stack .card.front[data-id="${CSS.escape(e.id || '')}"]`);
+    const ta = card && $('.ask-form textarea', card);
+    if (ta && !ta.value.trim()) { ta.value = e.text; S.asking.add(e.id); syncAskButton(card); }
+    return;
+  }
   if (e.type === 'note') {
     if (noteBox.value.trim()) return;
     noteBox.value = e.text;
@@ -788,6 +942,7 @@ function connect() {
     S.events = data.events;
     S.delivered = data.delivered;
     S.listening = data.listening;
+    noticeReplies();
     render();
   };
   es.onerror = () => {

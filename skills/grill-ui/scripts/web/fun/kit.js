@@ -582,7 +582,7 @@ export function makeKit(env) {
     // the grill UI
     ui: {
       card: () => $('#stack .card.front'),
-      answer: () => $('#stack .card.front textarea'),
+      answer: () => $('#stack .card.front .q-answer textarea'),
       options: () => $$('#stack .card.front .opt').map((el) => ({
         el, label: plain(el.dataset.label), recommended: el.classList.contains('rec'), selected: el.classList.contains('sel'), rect: el.getBoundingClientRect(),
       })),

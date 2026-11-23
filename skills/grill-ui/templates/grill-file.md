@@ -30,6 +30,11 @@ depends: <ids of the decisions this builds on, if any>
 - ★ **<Recommended option.>** <Your answer, and the reason in one or two sentences.>
 - **<Other real option.>** <What it costs or changes, in one line.>
 
+## Answers
+
+### A<n>
+<Your reply to the question I asked from a card, numbered as `wait` gave it. Leave the section out until I ask something.>
+
 ## Parked
 
 - <Ideas that need a decision later, with your best guess. Leave the section out when it's empty.>

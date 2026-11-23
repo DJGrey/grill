@@ -8,7 +8,9 @@ const RESERVED = [
   ['found', /^what i found\b/i],
   ['parked', /^parked\b/i],
   ['decisions', /^decisions\b/i],
+  ['replies', /^(answers|replies)\b/i],
 ];
+const REPLY_HEADING = /^###\s+A(\d+)\b.*$/i;
 
 export function slugify(s) {
   return s.toLowerCase().replace(/[`*_~]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48) || 'q';
@@ -147,6 +149,22 @@ function parseDecision(text) {
   return { n: d ? Number(d[1]) : null, text: (d ? d[2] : t).trim(), id };
 }
 
+// The agent's answers to questions the user asked from a card. One `### A<n>` block per ask,
+// where n is the number the server gave the ask. Anything before the first block is ignored.
+function parseReplies(lines) {
+  const replies = {};
+  let cur = null;
+  let fence = null;
+  for (const line of lines) {
+    const f = line.match(/^\s*(```+|~~~+)/);
+    if (f) fence = fence ? (line.trim().startsWith(fence) ? null : fence) : f[1];
+    const h = !fence && line.match(REPLY_HEADING);
+    if (h) { cur = []; replies[Number(h[1])] = cur; } else if (cur) cur.push(line);
+  }
+  for (const n of Object.keys(replies)) replies[n] = replies[n].join('\n').trim();
+  return Object.fromEntries(Object.entries(replies).filter(([, v]) => v));
+}
+
 export function parseGrill(src) {
   const lines = src.replace(/\r\n?/g, '\n').split('\n');
   const { meta, rest } = parseFrontmatter(lines);
@@ -158,13 +176,14 @@ export function parseGrill(src) {
 
   const seen = new Set();
   const questions = [];
-  const reserved = { found: '', parked: [], decisions: [] };
+  const reserved = { found: '', parked: [], decisions: [], replies: {} };
   for (const s of sections) {
     const kind = RESERVED.find(([, re]) => re.test(s.heading))?.[0];
     const body = s.lines.join('\n').trim();
     if (kind === 'found') reserved.found = body;
     else if (kind === 'parked') reserved.parked = listItems(s.lines).filter((t) => !/^nothing\.?$/i.test(t.trim()));
     else if (kind === 'decisions') reserved.decisions = listItems(s.lines).map(parseDecision);
+    else if (kind === 'replies') reserved.replies = parseReplies(s.lines);
     else questions.push(parseQuestion(s, questions.length, seen));
   }
 

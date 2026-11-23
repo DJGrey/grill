@@ -12,6 +12,7 @@ brief                       anything before the first `## `
 ## What I found             reserved: findings and replies to my notes
 ## Q1. Question? {#id}      one section per question, in the order I should answer them
 ## Q2. ...
+## Answers                  reserved: your replies to what I asked from a card, one ### A<n> each
 ## Parked                   reserved: ideas for later, with your best guess
 ## Decisions so far         reserved: the decision log, one D line per decision
 ```
@@ -61,6 +62,8 @@ Optional muted note shown under the options.
 | ★ | Marks your recommendation. Enter on an empty answer box accepts it, so every question needs one. `⭐`, `(recommended)` and `[recommended]` also work. |
 
 **What I can answer.** I can pick an option, or pick one and type a comment ("their words"), or type my own answer and pick nothing, or press Enter to accept the ★. I can also click a decided question in the sidebar to revise it. That arrives as a **revised** answer.
+
+**What I can ask.** Every card has an "Ask the agent" box (⌘K). What I type there reaches you as an **ask**, numbered `A1`, `A2` and so on across the session. You reply under `## Answers`, below.
 
 ## Context blocks
 
@@ -116,6 +119,23 @@ Kinds are `NOTE`, `TIP`, `IMPORTANT`, `WARNING` and `CAUTION` (or `RISK`).
 
 Shown at the top of my Notes panel as "From the agent", and it flashes when it changes. Rewrite it freely. Keep it to what matters for the questions that are still open.
 
+## Answers
+
+```markdown
+## Answers
+
+### A1
+Four people, and one of them moves to payments in January. So the squad would really be three.
+
+### A2
+Today only card declines over 5% in an hour page anyone. Tax errors go to a Slack channel nobody owns.
+```
+
+- One `### A<n>` block per ask, where `n` is the number `wait` gave it. Anything under the heading, up to the next `### A`, is the reply. Markdown, tables, charts and diagrams all work.
+- The reply shows on the card I asked from, under my question, and in my Notes panel. If I've moved to another card by then, I get a toast saying where it landed.
+- Answer asks before anything else. I'm waiting on that card.
+- Don't edit the question to answer an ask. The card must not change under me. If the reply changes your recommendation or shows the question is wrong, say so in the reply.
+
 ## Parked
 
 ```markdown
@@ -156,4 +176,10 @@ An answer event looks like this. With `multi: true`, `choices: [...]` replaces `
 
 ```json
 {"seq":3,"type":"answer","id":"invoice-gen","choice":"Async worker","custom":"use SQS","revision":false,"at":"…"}
+```
+
+An ask event carries the card it came from in `id`, and its number in `n`.
+
+```json
+{"seq":4,"type":"ask","id":"owner","text":"How big is the billing squad?","n":1,"at":"…"}
 ```
