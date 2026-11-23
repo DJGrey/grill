@@ -2,7 +2,7 @@
 // grill: the browser UI for grill sessions. Zero dependencies, Node 18+.
 //
 //   node grill.mjs open    <grill.md>          start the UI (if needed) and open it in the browser
-//   node grill.mjs wait    <grill.md>          block until the user answers or adds a note, print it
+//   node grill.mjs wait    <grill.md>          block until the user answers, asks or adds a note, print it
 //   node grill.mjs status  <grill.md>          list decided / queued questions
 //   node grill.mjs summary <grill.md>          print the decision log
 //   node grill.mjs move    <grill.md> <new.md> move the file (and its state) without breaking the open UI
@@ -90,6 +90,8 @@ function latestAnswers(events) {
 const active = (doc) => doc.questions.filter((q) => q.status !== 'skipped');
 const queued = (doc, answers) => active(doc).filter((q) => !answers.has(q.id));
 const picksOf = (a) => (a.choices?.length ? a.choices : a.choice ? [a.choice] : []);
+const asksOf = (events) => events.filter((e) => e.type === 'ask');
+const unanswered = (doc, events) => asksOf(events).filter((e) => !doc.replies[e.n]);
 
 // ── formatting for the agent ───────────────────────────────────────────────
 
@@ -114,8 +116,19 @@ function formatNote(e, doc) {
   return `### Note${q ? ` (written while on "${q.title}")` : ''}\n${e.text}`;
 }
 
-function formatState(doc, answers) {
+function formatAsk(e, doc) {
+  const q = e.id && doc.questions.find((x) => x.id === e.id);
+  return [
+    `### Asked A${e.n}${q ? `, on "${q.title}"  \`#${q.id}\`` : ''}`,
+    `> ${e.text.replace(/\n/g, '\n> ')}`,
+    `_They're waiting on this card for your answer. Find the facts, then write it under \`## Answers\` as \`### A${e.n}\` before anything else. Don't edit the question itself._`,
+  ].join('\n');
+}
+
+function formatState(doc, answers, events) {
   const out = [];
+  const open = unanswered(doc, events);
+  if (open.length) out.push(`**Answer these first** under \`## Answers\` (one \`### A<n>\` block each): ${open.map((e) => `A${e.n}`).join(', ')}.`);
   const logged = new Set(doc.decisions.map((d) => d.id).filter(Boolean));
   const unlogged = [...answers.keys()].filter((id) => !logged.has(id) && doc.questions.some((q) => q.id === id));
   if (unlogged.length) out.push(`Log these in "Decisions so far" (one D line each, ending in {#id}): ${unlogged.map((id) => `\`#${id}\``).join(', ')}.`);
@@ -162,6 +175,8 @@ function status() {
     const mark = q.status === 'skipped' ? '–' : answers.has(q.id) ? '✓' : '○';
     console.log(`  ${mark} #${q.id}  ${q.title}`);
   }
+  const open = unanswered(doc, readEvents());
+  if (open.length) console.log(`Unanswered questions from the user: ${open.map((e) => `A${e.n}`).join(', ')}`);
   console.log(`Undelivered events: ${readEvents().filter((e) => e.seq > readCursor()).length}`);
 }
 
@@ -199,9 +214,11 @@ async function wait() {
   pending = fresh();
 
   const doc = readDoc();
-  const answers = latestAnswers(readEvents());
-  const blocks = pending.map((e) => (e.type === 'note' ? formatNote(e, doc) : formatAnswer(e, doc)));
-  console.log([...blocks, '---', formatState(doc, answers)].join('\n\n'));
+  const events = readEvents();
+  const answers = latestAnswers(events);
+  const format = { note: formatNote, ask: formatAsk, answer: formatAnswer };
+  const blocks = pending.map((e) => (format[e.type] || formatAnswer)(e, doc));
+  console.log([...blocks, '---', formatState(doc, answers, events)].join('\n\n'));
   fs.writeFileSync(P.cursor, String(pending.at(-1).seq));
 }
 
@@ -313,6 +330,7 @@ function serve() {
     if (dup) return dup;
     const seq = (events.at(-1)?.seq || 0) + 1;
     const e = { seq, at: new Date().toISOString(), ...event };
+    if (e.type === 'ask') e.n = asksOf(events).length + 1; // the agent answers it as `### A<n>`
     fs.appendFileSync(P.events, JSON.stringify(e) + '\n');
     broadcast();
     return e;
@@ -377,6 +395,10 @@ function serve() {
       let out;
       if (url.pathname === '/api/note') {
         out = append({ type: 'note', cid: data.cid, text: String(data.text || '').trim(), during: data.during || null });
+      } else if (url.pathname === '/api/ask') {
+        const text = String(data.text || '').trim();
+        if (!text) { reject(400, 'empty question'); return; }
+        out = append({ type: 'ask', cid: data.cid, id: data.id ? String(data.id) : null, text });
       } else if (url.pathname === '/api/answer') {
         out = append({
           type: 'answer',

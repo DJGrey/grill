@@ -73,7 +73,7 @@ const ctx = {
   get cardTime() { return (now() - T.cardSince) / 1000; },
   get typing() { return T.typing; },
   get idle() { return (now() - T.lastKey) / 1000; },
-  get answerEmpty() { return !$('#stack .card.front textarea')?.value.trim(); },
+  get answerEmpty() { return !$('#stack .card.front .q-answer textarea')?.value.trim(); },
   get reduced() { return reducedMQ.matches; },
   get dark() { return darkMQ.matches; },
   get sound() { return soundOn; },
